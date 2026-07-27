@@ -1,0 +1,67 @@
+// Manually deploy or redeploy a single Helm release to EKS.
+
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'SERVICE_NAME',  defaultValue: '',                    description: 'Helm release name (e.g. catalog-api)')
+        string(name: 'NAMESPACE',     defaultValue: 'margbooks-dev',       description: 'Kubernetes namespace')
+        string(name: 'IMAGE',         defaultValue: '',                    description: 'Full ECR image URI')
+        string(name: 'IMAGE_TAG',     defaultValue: '',                    description: 'Image tag to deploy')
+        string(name: 'KUBECONFIG_ID', defaultValue: 'eks-dev-kubeconfig', description: 'Jenkins credential ID for kubeconfig')
+        choice(name: 'CHART',         choices: ['api', 'ui'],              description: 'Which Helm chart to use')
+        string(name: 'VALUES_FILE',   defaultValue: '',                    description: 'Override values file (blank = values-dev.yaml)')
+    }
+
+    options { timestamps(); disableConcurrentBuilds() }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    userRemoteConfigs: [[
+                        url: 'YOUR_GIT_REPO_URL/managed-aws-jenkins.git',
+                        credentialsId: 'git-cred'
+                    ]]
+                ])
+            }
+        }
+
+        stage('Helm Deploy') {
+            steps {
+                withCredentials([file(credentialsId: params.KUBECONFIG_ID, variable: 'KUBECONFIG')]) {
+                    script {
+                        def valuesFile = params.VALUES_FILE ?: "helm/charts/${params.CHART}/values-${params.NAMESPACE.contains('prod') ? 'prod' : 'dev'}.yaml"
+                        sh """
+                            helm upgrade --install ${params.SERVICE_NAME} helm/charts/${params.CHART} \\
+                                -f ${valuesFile} \\
+                                --set image.repository=${params.IMAGE} \\
+                                --set image.tag=${params.IMAGE_TAG} \\
+                                --namespace ${params.NAMESPACE} \\
+                                --create-namespace \\
+                                --wait --timeout=5m
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Verify') {
+            steps {
+                withCredentials([file(credentialsId: params.KUBECONFIG_ID, variable: 'KUBECONFIG')]) {
+                    sh """
+                        kubectl rollout status deployment/${params.SERVICE_NAME} -n ${params.NAMESPACE} --timeout=3m
+                        kubectl get pods -n ${params.NAMESPACE} -l app=${params.SERVICE_NAME}
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        success { echo "Deployed ${params.SERVICE_NAME}:${params.IMAGE_TAG} to ${params.NAMESPACE}" }
+        failure { echo "Deployment failed for ${params.SERVICE_NAME}. Check logs above." }
+    }
+}

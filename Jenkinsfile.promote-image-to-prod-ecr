@@ -1,0 +1,47 @@
+// Pull a dev ECR image and push it to prod ECR.
+
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'SERVICE_NAME',     defaultValue: '', description: 'ECR repository / service name (e.g. margbooks/catalog-api)')
+        string(name: 'SOURCE_IMAGE_TAG', defaultValue: '', description: "Tag in dev ECR — must start with 'master-'")
+        string(name: 'DEV_AWS_CRED',     defaultValue: 'aws-dev-ecr-cred',  description: 'Jenkins credential for dev ECR')
+        string(name: 'PROD_AWS_CRED',    defaultValue: 'aws-prod-ecr-cred', description: 'Jenkins credential for prod ECR')
+        string(name: 'AWS_REGION',       defaultValue: 'us-west-1',         description: 'AWS region')
+    }
+
+    options { timestamps(); disableConcurrentBuilds() }
+
+    stages {
+        stage('Validate') {
+            steps {
+                script {
+                    if (!params.SOURCE_IMAGE_TAG.startsWith('master-')) {
+                        error("SOURCE_IMAGE_TAG must start with 'master-', got: ${params.SOURCE_IMAGE_TAG}")
+                    }
+                }
+            }
+        }
+
+        stage('Promote to Prod ECR') {
+            steps {
+                script {
+                    promoteImageToEcr(
+                        serviceName: params.SERVICE_NAME,
+                        sourceTag:   params.SOURCE_IMAGE_TAG,
+                        targetTag:   params.SOURCE_IMAGE_TAG.replace('master-', 'prod-'),
+                        devCredId:   params.DEV_AWS_CRED,
+                        prodCredId:  params.PROD_AWS_CRED,
+                        awsRegion:   params.AWS_REGION
+                    )
+                }
+            }
+        }
+    }
+
+    post {
+        success { echo "Promoted: ${params.SERVICE_NAME}:${params.SOURCE_IMAGE_TAG.replace('master-', 'prod-')}" }
+        failure { echo "Promotion failed. Check logs above." }
+    }
+}

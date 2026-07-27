@@ -1,0 +1,28 @@
+@Library('managed-aws') _
+
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'AWS_REGION',    defaultValue: 'us-west-1',              description: 'AWS region')
+        string(name: 'CREDENTIAL_ID', defaultValue: 'aws-terraform-cred-dev', description: 'Jenkins AWS credential ID')
+        choice(name: 'TARGET',        choices: ['rds', 'eks', 'vpc'],         description: 'Which component to DESTROY (order matters: rds → eks → vpc)')
+    }
+
+    options { timestamps(); disableConcurrentBuilds() }
+
+    stages {
+        stage('Destroy') {
+            steps {
+                script {
+                    terraformDestroy(environment: 'dev', target: params.TARGET)
+                }
+            }
+        }
+    }
+
+    post {
+        success { echo "dev/${params.TARGET} destroyed." }
+        failure { echo "dev/${params.TARGET} destroy failed. Check logs above." }
+    }
+}

@@ -1,0 +1,21 @@
+grafana:
+  adminPassword: "changeme"
+  persistence:
+    enabled: true
+    storageClassName: ebs-gp3-prod
+    size: 10Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 300m
+      memory: 512Mi
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: Prometheus
+          type: prometheus
+          url: http://prometheus-operated:9090
+          isDefault: true

@@ -1,0 +1,28 @@
+@Library('managed-aws') _
+
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'AWS_REGION',    defaultValue: 'us-west-1',              description: 'AWS region')
+        string(name: 'CREDENTIAL_ID', defaultValue: 'aws-terraform-cred-dev', description: 'Jenkins AWS credential ID')
+        choice(name: 'TARGET',        choices: ['vpc', 'eks', 'rds'],         description: 'Which component to deploy')
+    }
+
+    options { timestamps(); ansiColor('xterm'); disableConcurrentBuilds() }
+
+    stages {
+        stage('Deploy') {
+            steps {
+                script {
+                    terraformDeploy(environment: 'dev', target: params.TARGET)
+                }
+            }
+        }
+    }
+
+    post {
+        success { echo "dev/${params.TARGET} apply complete." }
+        failure { echo "dev/${params.TARGET} apply failed. Check logs above." }
+    }
+}

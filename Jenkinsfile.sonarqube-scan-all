@@ -1,0 +1,30 @@
+// Run SonarQube scan across all registered services.
+
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'BRANCH', defaultValue: 'main', description: 'Branch to scan')
+    }
+
+    options { timestamps() }
+
+    stages {
+        stage('Sonar Scan All Services') {
+            steps {
+                script {
+                    checkout([$class: 'GitSCM',
+                              branches: [[name: "*/${params.BRANCH}"]],
+                              userRemoteConfigs: scm.userRemoteConfigs])
+
+                    def registry = readYaml file: 'jenkins-service-registry.yaml'
+                    def services = registry.services?.keySet() ?: []
+
+                    services.each { svc ->
+                        runSonar(svc, registry.services[svc] ?: [:], registry.sonarqube ?: [:])
+                    }
+                }
+            }
+        }
+    }
+}

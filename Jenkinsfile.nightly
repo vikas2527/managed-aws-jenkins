@@ -1,0 +1,60 @@
+// Nightly pipeline — full build + Trivy scan + optional deploy.
+
+pipeline {
+    agent any
+
+    triggers { cron('H 2 * * *') }
+
+    parameters {
+        string(name: 'BRANCH',       defaultValue: 'main',  description: 'Branch to build')
+        string(name: 'SERVICE_NAME', defaultValue: '',      description: 'Service to build and scan')
+        string(name: 'DOCKERFILE',   defaultValue: '',      description: 'Path to Dockerfile (e.g. services/catalog-api/Dockerfile)')
+        string(name: 'CONTEXT',      defaultValue: '.',     description: 'Docker build context')
+        booleanParam(name: 'DEPLOY', defaultValue: false,   description: 'Deploy to dev after nightly build')
+        string(name: 'AWS_REGION',   defaultValue: 'us-west-1', description: 'AWS region')
+    }
+
+    options { timestamps(); buildDiscarder(logRotator(numToKeepStr: '10')) }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout([$class: 'GitSCM',
+                          branches: [[name: "*/${params.BRANCH}"]],
+                          userRemoteConfigs: scm.userRemoteConfigs])
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh "docker build -t ${params.SERVICE_NAME}:nightly-${env.BUILD_NUMBER} -f ${params.DOCKERFILE} ${params.CONTEXT}"
+            }
+        }
+
+        stage('Trivy Scan') {
+            steps {
+                sh """
+                    trivy image --exit-code 1 --severity HIGH,CRITICAL \\
+                        --format table ${params.SERVICE_NAME}:nightly-${env.BUILD_NUMBER}
+                """
+            }
+        }
+
+        stage('Deploy to Dev') {
+            when { expression { params.DEPLOY } }
+            steps {
+                script {
+                    def registry = readYaml file: 'jenkins-service-registry.yaml'
+                    def envCfg   = registry.environments.dev
+                    def ecrImage = "${envCfg.ecrHost}/${envCfg.ecrPrefix}/${params.SERVICE_NAME}"
+                    runDev(params.SERVICE_NAME, registry.defaults ?: [:], envCfg, ecrImage)
+                }
+            }
+        }
+    }
+
+    post {
+        failure { echo "Nightly build failed for ${params.SERVICE_NAME}." }
+        success { echo "Nightly build passed for ${params.SERVICE_NAME}." }
+    }
+}

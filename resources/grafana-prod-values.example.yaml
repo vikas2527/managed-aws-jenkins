@@ -1,0 +1,22 @@
+grafana:
+  adminPassword: "changeme"   # override via Jenkins secret or AWS Secrets Manager
+  replicas: 2
+  persistence:
+    enabled: true
+    storageClassName: ebs-gp3-prod
+    size: 20Gi
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: Prometheus
+          type: prometheus
+          url: http://prometheus-operated:9090
+          isDefault: true

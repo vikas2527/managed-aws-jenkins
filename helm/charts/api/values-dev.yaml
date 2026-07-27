@@ -1,0 +1,54 @@
+replicaCount: 1
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internal
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/group.name: margbooks-dev
+    alb.ingress.kubernetes.io/healthcheck-path: /health/live
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: "30"
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: "5"
+    alb.ingress.kubernetes.io/healthy-threshold-count: "2"
+    alb.ingress.kubernetes.io/unhealthy-threshold-count: "3"
+  host: margbooks-dev.internal
+  paths:
+    - path: /api/catalog
+      pathType: Prefix
+      serviceName: catalog-api
+      servicePort: 8080
+    - path: /api/inventory
+      pathType: Prefix
+      serviceName: inventory-api
+      servicePort: 8080
+    - path: /api/customers
+      pathType: Prefix
+      serviceName: customer-api
+      servicePort: 8080
+    - path: /api/orders
+      pathType: Prefix
+      serviceName: order-api
+      servicePort: 8080
+    - path: /api/notifications
+      pathType: Prefix
+      serviceName: notification-api
+      servicePort: 8080
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+autoscaling:
+  enabled: false
+
+cors:
+  allowedOrigins:
+    - "*"
+
+enableSwagger: true
+runMigrationsOnStartup: true

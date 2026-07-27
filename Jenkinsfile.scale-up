@@ -1,0 +1,42 @@
+// Scale up EKS node group.
+
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'CLUSTER_NAME',  defaultValue: 'margbooks-dev-eks',    description: 'EKS cluster name')
+        string(name: 'NODE_GROUP',    defaultValue: 'margbooks-dev-node-group', description: 'EKS node group name')
+        string(name: 'DESIRED_SIZE',  defaultValue: '2',                    description: 'Desired node count')
+        string(name: 'MIN_SIZE',      defaultValue: '1',                    description: 'Minimum node count')
+        string(name: 'MAX_SIZE',      defaultValue: '4',                    description: 'Maximum node count')
+        string(name: 'AWS_REGION',    defaultValue: 'us-west-1',            description: 'AWS region')
+        string(name: 'CREDENTIAL_ID', defaultValue: 'aws-terraform-cred-dev', description: 'Jenkins AWS credential ID')
+    }
+
+    options { timestamps(); disableConcurrentBuilds() }
+
+    stages {
+        stage('Scale Up Node Group') {
+            steps {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding',
+                                  credentialsId: params.CREDENTIAL_ID,
+                                  accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                                  secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+                    withEnv(["AWS_DEFAULT_REGION=${params.AWS_REGION}"]) {
+                        sh """
+                            aws eks update-nodegroup-config \\
+                                --cluster-name ${params.CLUSTER_NAME} \\
+                                --nodegroup-name ${params.NODE_GROUP} \\
+                                --scaling-config minSize=${params.MIN_SIZE},maxSize=${params.MAX_SIZE},desiredSize=${params.DESIRED_SIZE}
+                        """
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        success { echo "Node group scaled up to ${params.DESIRED_SIZE} nodes." }
+        failure { echo "Scale up failed. Check logs above." }
+    }
+}

@@ -1,0 +1,29 @@
+@Library('managed-aws') _
+
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'AWS_REGION',    defaultValue: 'us-west-1',                  description: 'AWS region')
+        string(name: 'CREDENTIAL_ID', defaultValue: 'aws-terraform-cred-shared',  description: 'Jenkins AWS credential ID')
+        choice(name: 'TARGET',        choices: ['vpc', 'ecr', 'jenkins', 'devtools', 'vpc-peering', 'vpn'],
+                                      description: 'Which shared component to deploy')
+    }
+
+    options { timestamps(); ansiColor('xterm'); disableConcurrentBuilds() }
+
+    stages {
+        stage('Deploy') {
+            steps {
+                script {
+                    terraformDeploy(environment: 'shared', target: params.TARGET)
+                }
+            }
+        }
+    }
+
+    post {
+        success { echo "shared/${params.TARGET} apply complete." }
+        failure { echo "shared/${params.TARGET} apply failed. Check logs above." }
+    }
+}
