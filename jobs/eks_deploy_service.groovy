@@ -1,8 +1,8 @@
 // Jenkins Job DSL — App CI/CD pipelines for all services.
 
-def JENKINS_REPO_URL  = 'YOUR_GIT_REPO_URL/managed-aws-jenkins.git'
-def API_REPO_URL      = 'YOUR_GIT_REPO_URL/margbooks-api.git'
-def UI_REPO_URL       = 'YOUR_GIT_REPO_URL/margbooks-ui.git'
+def JENKINS_REPO_URL  = 'https://github.com/vikas2527/managed-aws-jenkins.git'
+def API_REPO_URL      = 'https://github.com/vikas2527/margbooks-api.git'
+def UI_REPO_URL       = 'https://github.com/vikas2527/margbooks-ui.git'
 def GIT_CRED_ID       = 'git-cred'
 
 def apiServices = [

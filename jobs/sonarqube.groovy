@@ -1,6 +1,6 @@
 // Jenkins Job DSL — SonarQube scan jobs.
 
-def JENKINS_REPO_URL = 'YOUR_GIT_REPO_URL/managed-aws-jenkins.git'
+def JENKINS_REPO_URL = 'https://github.com/vikas2527/managed-aws-jenkins.git'
 def GIT_CRED_ID      = 'git-cred'
 
 pipelineJob('sonarqube/scan-all-services') {
