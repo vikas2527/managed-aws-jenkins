@@ -15,7 +15,7 @@ def call(Map config = [:]) {
     dir('jenkins-repo') {
         checkout([
             $class: 'GitSCM',
-            branches: [[name: '*/main']],
+            branches: [[name: '*/master']],
             userRemoteConfigs: [[
                 url: 'https://github.com/vikas2527/managed-aws-jenkins.git',
                 credentialsId: 'git-cred'
