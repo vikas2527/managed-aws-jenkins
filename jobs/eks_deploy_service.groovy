@@ -28,7 +28,7 @@ apiServices.each { svc ->
                 scm {
                     git {
                         remote { url(API_REPO_URL); credentials(GIT_CRED_ID) }
-                        branch('main')
+                        branch('master')
                     }
                 }
                 scriptPath('Jenkinsfile')
@@ -50,7 +50,7 @@ apiServices.each { svc ->
                 scm {
                     git {
                         remote { url(API_REPO_URL); credentials(GIT_CRED_ID) }
-                        branch('main')
+                        branch('master')
                     }
                 }
                 scriptPath('Jenkinsfile')
@@ -74,7 +74,7 @@ pipelineJob('dev/ui') {
             scm {
                 git {
                     remote { url(UI_REPO_URL); credentials(GIT_CRED_ID) }
-                    branch('main')
+                    branch('master')
                 }
             }
             scriptPath('Jenkinsfile')
@@ -96,7 +96,7 @@ pipelineJob('prod/ui') {
             scm {
                 git {
                     remote { url(UI_REPO_URL); credentials(GIT_CRED_ID) }
-                    branch('main')
+                    branch('master')
                 }
             }
             scriptPath('Jenkinsfile')
@@ -125,7 +125,7 @@ pipelineJob('prod/ui') {
                 scm {
                     git {
                         remote { url(JENKINS_REPO_URL); credentials(GIT_CRED_ID) }
-                        branch('main')
+                        branch('master')
                     }
                 }
                 scriptPath('Jenkinsfile.deploy-eks')
