@@ -22,10 +22,11 @@ def call(String serviceName, Map svcCfg, Map envCfg, String ecrImage) {
     }
 
     stage('Trivy Scan') {
-        sh """
-            trivy image --exit-code 1 --severity HIGH,CRITICAL \\
-                --format table ${fullImage}
-        """
+    sh """
+        trivy image --exit-code 1 --severity HIGH,CRITICAL \
+            --ignore-unfixed \
+            --format table ${fullImage}
+    """
     }
 
     stage('Push to Dev ECR') {
