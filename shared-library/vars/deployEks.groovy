@@ -17,7 +17,7 @@ def call(Map config = [:]) {
             $class: 'GitSCM',
             branches: [[name: '*/main']],
             userRemoteConfigs: [[
-                url: 'YOUR_GIT_REPO_URL/managed-aws-jenkins.git',
+                url: 'https://github.com/vikas2527/managed-aws-jenkins.git',
                 credentialsId: 'git-cred'
             ]]
         ])
