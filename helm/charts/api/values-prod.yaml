@@ -14,7 +14,7 @@ ingress:
     alb.ingress.kubernetes.io/unhealthy-threshold-count: "3"
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
     alb.ingress.kubernetes.io/ssl-redirect: '443'
-  host: margbooks.com
+  host: vikasmargbooks.com
   paths:
     - path: /api/catalog
       pathType: Prefix
