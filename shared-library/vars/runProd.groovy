@@ -12,7 +12,7 @@ def call(String serviceName, Map svcCfg, Map envCfg, String ecrImage) {
 
     stage('Promote Image to Prod ECR') {
         promoteImageToEcr(
-            serviceName: serviceName,
+            serviceName: "${envCfg.ecrPrefix}/${serviceName}",
             sourceTag:   imageTag,
             targetTag:   prodTag,
             devCredId:   'aws-dev-ecr-cred',
