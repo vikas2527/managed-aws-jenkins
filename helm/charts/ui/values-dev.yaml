@@ -2,8 +2,8 @@ replicaCount: 1
 
 ingress:
   enabled: true
+  className: alb
   annotations:
-    kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internal
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/group.name: margbooks-dev
